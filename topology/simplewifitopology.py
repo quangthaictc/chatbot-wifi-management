@@ -51,6 +51,7 @@ def topology():
     net.build()
     c0.start()
     ap1.start([c0])
+    ap2.start([c0])
 
     info("*** Running CLI\n")
     CLI(net)
