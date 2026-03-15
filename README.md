@@ -1,26 +1,28 @@
 # Draft notes - The full documentation will be available soon!
 
-Ryu just work in python3.9 (maybe)
+Ryu just work good in python3.9 (maybe)
 
 Thanks so much for [this blog](https://www.linkedin.com/pulse/installing-ryu-sdn-controller-ubuntu-step-by-step-developer-kamran-g5gdf/)
 
 ## Installation
 
-Install python3.9 & dependencies
+### Ryu setup
+
+**Install python3.9 & dependencies**
 
 ```bash
 sudo apt update
 sudo apt install software-properties-common
 
 sudo add-apt-repository ppa:deadsnakes/ppa
-# Then press ENTER multi time
+# Then press ENTER
 
 sudo apt update -y
 
 sudo apt install python3.9 python3.9-venv gcc libffi-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev
 ```
 
-### Create and active venv
+**Create and active venv**
 
 ```bash
 python3.9 -m venv .venv
@@ -30,66 +32,41 @@ python3.9 -m venv .venv
 source .venv/bin/active
 ```
 
-### Install python packages
+**Install python packages**
 
 ```bash
 # Fix error while install ryu
 
-pip install setuptools==79.0.1
+pip install "setuptools<58.0.0"
 
 pip install -r requirements.txt
 ```
 
 
-### Check ryu-manager
-
-```bash
-ryu-manager --version
-```# Draft notes - The full documentation will be available soon!
-
-Ryu just work in python3.9 (maybe)
-
-Thanks so much for [this blog](https://www.linkedin.com/pulse/installing-ryu-sdn-controller-ubuntu-step-by-step-developer-kamran-g5gdf/)
-
-## Installation
-
-Install python3.9 & dependencies
-
-```bash
-sudo apt update
-sudo apt install software-properties-common
-
-sudo add-apt-repository ppa:deadsnakes/ppa
-# Then press ENTER multi time
-
-sudo apt update -y
-
-sudo apt install python3.9 python3.9-venv gcc libffi-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev
-```
-
-### Create and active venv
-
-```bash
-python3.9 -m venv .venv
-```
-
-```bash
-source .venv/bin/active
-```
-
-### Install python packages
-
-```bash
-# Fix error while install ryu
-
-pip install setuptools==79.0.1
-
-pip install -r requirements.txt
-```
-
-
-### Check ryu-manager
+**Check ryu-manager**
 
 ```bash
 ryu-manager --version
 ```
+
+### Mininet-Wifi setup
+
+```bash
+git clone https://github.com/intrig-unicamp/mininet-wifi
+
+cd mininet-wifi
+
+sudo util/install.sh -Wlnfv
+```
+
+install.sh options:
+-W: wireless dependencies
+-n: mininet-wifi dependencies
+-f: OpenFlow
+-v: OpenvSwitch
+-l: wmediumd
+optional:
+-P: P4 dependencies
+-6: wpan tools
+
+**See more: [mininet-wifi repository](https://github.com/intrig-unicamp/mininet-wifi)**
