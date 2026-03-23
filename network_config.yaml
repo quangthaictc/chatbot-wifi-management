@@ -1,0 +1,99 @@
+---
+ovswitches:
+  - name: s11
+    dpid: 11
+    type: sw
+  - name: s21
+    dpid: 21
+    type: sw
+  - name: s22
+    dpid: 22
+    type: sw
+
+  # Access Point
+  - name: ap31
+    dpid: 31
+    type: ap
+    ssid: HUFLIT
+    mode: g
+    channel: 1
+  - name: ap32
+    dpid: 32
+    type: ap
+    ssid: HUFLIT-GV
+    mode: g
+    channel: 6
+    passwd: Huflit7304@
+    encrypt: wpa2
+    fail_mode: standalone
+    datapath: user
+  - name: ap33
+    dpid: 33
+    type: ap
+    ssid: HUFLIT
+    mode: g
+    channel: 1
+  - name: ap34
+    dpid: 34
+    type: ap
+    ssid: HUFLIT-GV
+    mode: g
+    channel: 6
+    passwd: Huflit7304@
+    encrypt: wpa2
+    fail_mode: standalone
+    datapath: user
+
+links:
+  - source: s11
+    source_port: 1
+    target: s21
+    target_port: 1
+  - source: s11
+    source_port: 2
+    target: s22
+    target_port: 1
+
+  - source: s21
+    source_port: 2
+    target: ap31
+    target_port: 1
+  - source: s21
+    source_port: 3
+    target: ap32
+    target_port: 1
+
+  - source: s22
+    source_port: 2
+    target: ap33
+    target_port: 1
+  - source: s22
+    source_port: 3
+    target: ap34
+    target_port: 1
+  
+
+# For Mininet-WiFi
+stations:
+  - name: sta1
+    ip: 10.10.0.10/24
+    mac: 00:00:00:00:00:01
+    connected_to: ap31
+  - name: sta2
+    ip: 10.10.0.20/24
+    mac: 00:00:00:00:00:02
+    connected_to: ap32
+    passwd: Huflit7304@
+    encrypt: wpa2
+  - name: sta3
+    ip: 10.10.0.30/24
+    mac: 00:00:00:00:00:03
+    connected_to: ap33
+  - name: sta4
+    ip: 10.10.0.40/24
+    mac: 00:00:00:00:00:04
+    connected_to: ap34
+    passwd: Huflit7304@
+    encrypt: wpa2
+
+    
