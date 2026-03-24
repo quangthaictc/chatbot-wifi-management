@@ -1,0 +1,29 @@
+services:
+  controller:
+    image: quangthaictc/ryu-application
+    build:
+      context: ./controller
+      dockerfile: Dockerfile
+    container_name: ryu-app
+  
+  services:
+  infrastructure:
+    image: quangthaictc/infrastructure
+    build:
+      context: ./infrastructure
+      dockerfile: Dockerfile
+    container_name: mn-wifi
+    privileged: true
+    network_mode: "host"
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      # GUI Forwarding (X11)
+      #- /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /sys:/sys
+      - /lib/modules:/lib/modules
+      - /sys/kernel/debug:/sys/kernel/debug
+      - /var/run/netns:/var/run/netns:shared
+    stdin_open: true 
+    tty: true

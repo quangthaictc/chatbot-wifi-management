@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-"This example creates a simple network topology with 1 AP and 2 stations"
-
 import os
 import sys
 from time import sleep

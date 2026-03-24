@@ -1,15 +1,5 @@
 ---
 ovswitches:
-  - name: s11
-    dpid: 11
-    type: sw
-  - name: s21
-    dpid: 21
-    type: sw
-  - name: s22
-    dpid: 22
-    type: sw
-
   # Access Point
   - name: ap31
     dpid: 31
@@ -17,32 +7,6 @@ ovswitches:
     ssid: HUFLIT
     mode: g
     channel: 1
-  - name: ap32
-    dpid: 32
-    type: ap
-    ssid: HUFLIT-GV
-    mode: g
-    channel: 6
-    passwd: Huflit7304@
-    encrypt: wpa2
-    fail_mode: standalone
-    datapath: user
-  - name: ap33
-    dpid: 33
-    type: ap
-    ssid: HUFLIT
-    mode: g
-    channel: 1
-  - name: ap34
-    dpid: 34
-    type: ap
-    ssid: HUFLIT-GV
-    mode: g
-    channel: 6
-    passwd: Huflit7304@
-    encrypt: wpa2
-    fail_mode: standalone
-    datapath: user
 
 links:
   - source: s11

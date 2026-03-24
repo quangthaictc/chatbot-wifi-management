@@ -4,8 +4,7 @@ import yaml
 
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.net import CLI
-from mn_wifi.link import wmediumd
-from mn_wifi.wmediumdConnector import interference
+from mn_wifi.node import UserAP
 from mininet.node import RemoteController
 from mininet.log import setLogLevel
 from mininet.log import info
@@ -14,7 +13,9 @@ def create_mininet_wifi(config_file, ctrler_addr="127.0.0.1"):
     with open(config_file, "r") as file:
         config = yaml.safe_load(file)
 
-    net = Mininet_wifi(controller=RemoteController, link=wmediumd, wmediumd_mode=interference)
+    net = Mininet_wifi(controller=RemoteController, accessPoint=UserAP, autoAssociation=False)
+
+    
 
 if __name__ == "__main__":
     ctrl_address = os.getenv("SDN_CONTROLLER", "127.0.0.1")

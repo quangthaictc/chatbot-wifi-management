@@ -17,7 +17,6 @@ from ryu.lib.packet import udp
 from ryu.lib.packet import in_proto
 from ryu.app.ofctl.api import get_datapath
 from base_switch import BaseSwitch
-from utils import Network
 
 # Protocol Names
 ETHERNET = ethernet.ethernet.__name__
