@@ -5,6 +5,7 @@ services:
       context: ./controller
       dockerfile: Dockerfile
     container_name: ryu-app
+    network_mode: "host"
   
   services:
   infrastructure:

@@ -18,11 +18,9 @@ WORKDIR /app
 RUN pip install --no-cache-dir --upgrade pip==20.3.4 \
     && pip install --no-cache-dir "setuptools<58.0.0"
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 6633 6653
 
-CMD ["ryu-manager", "app.py"]
+CMD ["/bin/bash"]
