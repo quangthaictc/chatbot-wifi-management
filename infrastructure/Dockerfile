@@ -10,11 +10,15 @@ RUN pip install six numpy matplotlib beautifulsoup4
 WORKDIR /app
 
 # Fix install script outdated dependencies names solved by this dockerfile.
-RUN git clone https://github.com/intrig-unicamp/mininet-wifi    \
-    cd mininet-wifi \
-    && sed -i 's/pyflakes//g' util/install.sh  \
-    && sed -i 's/pep8//g' util/install.sh   \
+RUN git clone https://github.com/intrig-unicamp/mininet-wifi \
+    && cd mininet-wifi \
+    && sed -i 's/pyflakes//g' util/install.sh \
+    && sed -i 's/pep8//g' util/install.sh \
     && util/install.sh -Wlnfv6 
 
-# Set the dafault init to use bash shell
-CMD [ "/bin/bash" ]
+COPY . .
+
+RUN mv entrypoint.sh /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT [ "/entrypoint.sh" ]
+

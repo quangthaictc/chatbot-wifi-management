@@ -21,6 +21,8 @@ RUN pip install --no-cache-dir --upgrade pip==20.3.4 \
 COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 6633 6653
+EXPOSE 6633 6653 8080
 
-CMD ["/bin/bash"]
+RUN mv entrypoint.sh /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT [ "/entrypoint.sh" ]

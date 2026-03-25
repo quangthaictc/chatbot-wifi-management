@@ -6,10 +6,13 @@ services:
       dockerfile: Dockerfile
     container_name: ryu-app
     network_mode: "host"
+    tty: true
+    stdin_open: true
   
-  services:
   infrastructure:
     image: quangthaictc/infrastructure
+    # depends_on:
+    #  - controller
     build:
       context: ./infrastructure
       dockerfile: Dockerfile
@@ -17,7 +20,7 @@ services:
     privileged: true
     network_mode: "host"
     environment:
-      - DISPLAY=${DISPLAY}
+      #- DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
     volumes:
       # GUI Forwarding (X11)
@@ -26,5 +29,5 @@ services:
       - /lib/modules:/lib/modules
       - /sys/kernel/debug:/sys/kernel/debug
       - /var/run/netns:/var/run/netns:shared
-    stdin_open: true 
     tty: true
+    stdin_open: true
