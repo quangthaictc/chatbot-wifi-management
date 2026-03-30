@@ -1,9 +1,7 @@
-switches:
+ovswitches:
   - name: s1
     cls: OVSSwitch
     protocols: OpenFlow13
-
-aps:
   - name: ap1
     vssid: HUFLIT-GV,HUFLIT-NV
     ssid: HUFLIT

@@ -20,6 +20,17 @@ services:
     tty: true
     stdin_open: true
 
+  api:
+    image: quangthaictc/fastapi
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    container_name: fastapi
+    network_mode: "host"
+    restart: always
+
   infrastructure:
     image: quangthaictc/infrastructure
     # depends_on:
