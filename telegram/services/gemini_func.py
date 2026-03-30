@@ -1,5 +1,5 @@
 import httpx
-from config.settings import RYU_URL
+from config.settings import FAST_API_URL
 
 
 async def get_network_switches():
@@ -16,7 +16,7 @@ async def get_network_switches():
     """
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{RYU_URL}/stats/switches")
+            response = await client.get(f"{FAST_API_URL}/stats/switches")
             return response.json()
         except Exception as e:
             return {"error": f"Can't connected to Ryu: {str(e)}"}

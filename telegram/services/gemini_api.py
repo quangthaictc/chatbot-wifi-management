@@ -4,7 +4,7 @@ from google import genai
 from google.genai import types
 from google.genai.errors import ClientError, ServerError
 from config.settings import GEMINI_API_KEY
-from services.ryu_api import tools_list
+from services.gemini_func import tools_list
 
 
 class GeminiService:
