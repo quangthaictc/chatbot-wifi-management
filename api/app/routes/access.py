@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import httpx
+from utils.network_mapper import NetworkMapper
 
 from core.config import RYU_URL
 
 router = APIRouter(prefix="/access", tags=["access"])
+mapper = NetworkMapper()
 
 
 class AccessRequest(BaseModel):
@@ -27,12 +29,15 @@ async def get_blocked_devices(dpid: int):
                 match = flow.get("match", {})
                 actions = flow.get("actions", [])
 
-                # CHẾ BIẾN: Lọc các flow có độ ưu tiên cao nhất, match theo MAC nguồn và action rỗng (DROP)
+                # Filter highest priority, match by src MAC and null action (DROP)
                 if flow.get("priority") == 65535 and "dl_src" in match and not actions:
-                    blocked_macs.append(match["dl_src"])
+                    blocked_macs.append(
+                        f"{mapper.get_station_info(match['dl_src'])} - {match['dl_src']}"
+                    )
 
             return {
                 "dpid": dpid,
+                "location": mapper.get_device_name(dpid),
                 "blocked_devices": blocked_macs,
                 "total_blocked": len(blocked_macs),
             }
@@ -59,8 +64,7 @@ async def block_device(req: AccessRequest):
             return {
                 "status": "success",
                 "action": "block",
-                "mac_address": req.mac_address,
-                "message": f"The device with MAC address {req.mac_address} has been disconnected.",
+                "message": f"The device {mapper.get_station_info(req.mac_address)} with MAC address {req.mac_address} has been disconnected.",
             }
         except httpx.RequestError as e:
             raise HTTPException(status_code=503, detail=str(e))
@@ -86,8 +90,7 @@ async def unblock_device(dpid: int, mac_address: str):
             return {
                 "status": "success",
                 "action": "unblock",
-                "mac_address": mac_address,
-                "message": f"Network connection has been restored for MAC {mac_address}.",
+                "message": f"Network connection has been restored for device {mapper.get_station_info(mac_address)} - {mac_address}.",
             }
         except httpx.RequestError as e:
             raise HTTPException(status_code=503, detail=str(e))

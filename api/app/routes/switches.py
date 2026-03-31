@@ -1,9 +1,13 @@
 from fastapi import APIRouter, HTTPException
 import httpx
+from utils.network_mapper import NetworkMapper
 from utils.dpid import DPIDConverter
+
 from core.config import RYU_URL
+import asyncio
 
 router = APIRouter(prefix="/switches", tags=["switches"])
+mapper = NetworkMapper()
 
 
 @router.get("/")
@@ -13,7 +17,6 @@ async def get_all_switches():
             resp = await client.get(f"{RYU_URL}/v1.0/topology/switches")
             resp.raise_for_status()
 
-            # CHẾ BIẾN: Chỉ lấy ID của các Switch, bỏ qua các thông số rườm rà của cổng
             raw_data = resp.json()
             switches = [DPIDConverter.to_int(switch.get("dpid")) for switch in raw_data]
 
@@ -32,21 +35,66 @@ async def get_switch_stats(dpid: int):
             raw_data = resp.json()
             port_stats = raw_data.get(str(dpid), [])
 
-            # CHẾ BIẾN: Lọc bỏ port "LOCAL" (port ảo của Ryu), chỉ giữ lại thông số rx/tx cơ bản
             clean_stats = []
             for port in port_stats:
                 if port.get("port_no") != "LOCAL":
                     clean_stats.append(
                         {
                             "port_id": port.get("port_no"),
-                            "rx_bytes": port.get("rx_bytes"),  # Dữ liệu nhận
-                            "tx_bytes": port.get("tx_bytes"),  # Dữ liệu gửi
+                            "rx_bytes": port.get("rx_bytes"),
+                            "tx_bytes": port.get("tx_bytes"),
                             "rx_errors": port.get("rx_errors"),
                             "tx_errors": port.get("tx_errors"),
                         }
                     )
+            print(f"==================================={DPIDConverter.to_hex(dpid)}")
+            return {
+                "dpid": dpid,
+                "dpid_device_name": mapper.get_device_name(dpid),
+                "ports": clean_stats,
+            }
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=503, detail=str(e))
 
-            return {"dpid": dpid, "ports": clean_stats}
+
+@router.get("/{dpid}/bandwidth")
+async def get_switch_bandwidth(dpid: int):
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            resp1 = await client.get(f"{RYU_URL}/stats/port/{dpid}")
+            resp1.raise_for_status()
+            data1 = resp1.json().get(str(dpid), [])
+
+            await asyncio.sleep(1.0)
+
+            resp2 = await client.get(f"{RYU_URL}/stats/port/{dpid}")
+            resp2.raise_for_status()
+            data2 = resp2.json().get(str(dpid), [])
+
+            bandwidth_stats = []
+
+            for p1, p2 in zip(data1, data2):
+                if p1.get("port_no") != "LOCAL":
+                    delta_rx_bytes = p2.get("rx_bytes", 0) - p1.get("rx_bytes", 0)
+                    delta_tx_bytes = p2.get("tx_bytes", 0) - p1.get("tx_bytes", 0)
+
+                    rx_mbps = round((delta_rx_bytes * 8) / 1_000_000, 2)
+                    tx_mbps = round((delta_tx_bytes * 8) / 1_000_000, 2)
+
+                    bandwidth_stats.append(
+                        {
+                            "port_id": p1.get("port_no"),
+                            "rx_mbps": rx_mbps,  # Download speeds
+                            "tx_mbps": tx_mbps,  # Upload speeds
+                        }
+                    )
+
+            return {
+                "dpid": dpid,
+                "dpid_device_name": mapper.get_device_name(dpid),
+                "bandwidth": bandwidth_stats,
+            }
+
         except httpx.RequestError as e:
             raise HTTPException(status_code=503, detail=str(e))
 
@@ -79,6 +127,7 @@ async def get_switch_flows(dpid: int):
 
             return {
                 "dpid": dpid,
+                "dpid_device_name": mapper.get_device_name(dpid),
                 "active_custom_rules": custom_rules,
                 "total_rules": len(custom_rules),
             }

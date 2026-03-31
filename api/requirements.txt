@@ -2,3 +2,6 @@ fastapi[standard]
 httpx
 uvicorn
 pydantic
+pyyaml
+networkx
+matplotlib

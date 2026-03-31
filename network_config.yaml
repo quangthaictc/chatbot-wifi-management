@@ -1,18 +1,62 @@
-ovswitches:
-  - name: s1
-    cls: OVSSwitch
-    protocols: OpenFlow13
-  - name: ap1
-    vssid: HUFLIT-GV,HUFLIT-NV
-    ssid: HUFLIT
-    mode: g
+controller:
+  ip: "127.0.0.1"
+  port: 6653
+
+switches:
+  - id: "s1"
+    real_name: "Core-Switch-Cisco-C9300"
+    dpid: "0000000000000001"
+
+access_points:
+  - id: "ap1"
+    real_name: "Aruba AP HA0408"
+    ssid: "HUFLIT"
     channel: 1
-    cls: OVSAP
-    protocols: OpenFlow13
-  - name: ap2
-    vssid: HUFLIT-GV,HUFLIT-NV
-    ssid: HUFLIT
-    mode: g
-    channel: 1
-    cls: OVSAP
-    protocols: OpenFlow13
+    dpid: "0000000000000002"
+    position: "10,50,0"
+    connected_to: "s1"
+
+  - id: "ap2"
+    real_name: "Aruba AP HA0407"
+    ssid: "HUFLIT"
+    channel: 6
+    dpid: "0000000000000003"
+    position: "50,50,0"
+    connected_to: "s1"
+
+  - id: "ap3"
+    real_name: "Aruba AP HA0406"
+    ssid: "HUFLIT"
+    channel: 11
+    dpid: "0000000000000004"
+    position: "90,50,0"
+    connected_to: "s1"
+
+stations:
+  - id: "sta1"
+    real_name: "Laptop quangthaictc"
+    ip: "10.0.0.1/8"
+    mac: "02:00:00:00:01:00"
+    position: "10,40,0"
+    connected_to: "ap1"
+
+  - id: "sta2"
+    real_name: "Laptop ASUS TUF A15"
+    ip: "10.0.0.2/8"
+    mac: "02:00:00:00:02:00"
+    position: "50,40,0"
+    connected_to: "ap2"
+
+  - id: "sta3"
+    real_name: "Laptop DELL"
+    ip: "10.0.0.3/8"
+    mac: "02:00:00:00:03:00"
+    position: "80,40,0"
+    connected_to: "ap3"
+
+  - id: "sta4"
+    real_name: "Laptop CTThanh"
+    ip: "10.0.0.4/8"
+    mac: "02:00:00:00:04:00"
+    position: "100,40,0"
+    connected_to: "ap3"

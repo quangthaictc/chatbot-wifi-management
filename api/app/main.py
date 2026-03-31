@@ -2,6 +2,8 @@
 
 import asyncio
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from utils.draw_network import generate_network_diagram
 import httpx
 from routes import access, stations, switches, security
 from core.config import RYU_URL
@@ -29,6 +31,20 @@ async def get_network_overview():
             return {"switches": switches_resp.json(), "links": links_resp.json()}
         except httpx.RequestError as e:
             raise HTTPException(status_code=503, detail=str(e))
+
+
+@app.get("/network/diagram", tags=["network"])
+async def get_network_diagram_image():
+    # Gọi lại hàm lấy JSON của bạn
+    topo_data = await get_network_overview()
+
+    # Đưa JSON cho hàm vẽ ảnh
+    image_path = generate_network_diagram(topo_data)
+
+    # FastAPI trả thẳng file ảnh này về cho client (Telegram Bot)
+    return FileResponse(
+        image_path, media_type="image/png", filename="network_diagram.png"
+    )
 
 
 @app.get("/health", tags=["system"])

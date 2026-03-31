@@ -30,6 +30,8 @@ services:
     container_name: fastapi
     network_mode: "host"
     restart: always
+    volumes:
+      - ./network_config.yaml:/app/network_config.yaml
 
   infrastructure:
     image: quangthaictc/infrastructure
@@ -53,5 +55,6 @@ services:
       - /lib/modules:/lib/modules
       - /sys/kernel/debug:/sys/kernel/debug
       - /var/run/netns:/var/run/netns:shared
+      - ./network_config.yaml:/app/network_config.yaml
     tty: true
     stdin_open: true

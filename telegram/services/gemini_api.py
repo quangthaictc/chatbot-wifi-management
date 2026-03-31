@@ -1,5 +1,4 @@
 import logging
-from aiogram.filters import exception
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError, ServerError
@@ -39,7 +38,7 @@ Response Style: Telegram MARKDOWN style. Once the data is retrieved, provide a r
         except ClientError as e:
             if e.code == 429:
                 return "You've reached the daily limit of 20 requests. See you again after 3:00 PM"
-        except ServerError as e:
+        except ServerError:
             return "Google's servers are a bit busy right now. Mind trying again in a few seconds?"
         except Exception as e:
             logger = logging.getLogger(__name__)

@@ -8,6 +8,8 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram import F
 from aiogram.types import CallbackQuery, Message
+import aiohttp
+from aiogram.types import BufferedInputFile
 from config.settings import TELEGRAM_API_TOKEN, FAST_API_URL
 
 from services.gemini_api import GeminiService
@@ -28,6 +30,29 @@ async def cmd_start(message: types.Message):
     await message.answer(
         "*QuackWF Bot - SDN Controller Assistant* \nWelcome, Sir! I am QuackWF, your AI assistant dedicated to managing your internal Wi-Fi network."
     )
+
+
+@dp.message(Command("map"))
+async def send_network_map(message: Message):
+    await message.answer("Đang lấy tọa độ vệ tinh và vẽ sơ đồ mạng...")
+
+    # Gọi xuống API của Backend
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"{FAST_API_URL}/network/diagram") as resp:
+            if resp.status == 200:
+                # Đọc byte của tấm ảnh
+                image_bytes = await resp.read()
+
+                # Đóng gói ảnh cho Telegram
+                photo = BufferedInputFile(image_bytes, filename="map.png")
+
+                # Gửi ảnh bùm!
+                await message.answer_photo(
+                    photo=photo,
+                    caption="Báo cáo Sếp, đây là sơ đồ hạ tầng mạng hiện tại!",
+                )
+            else:
+                await message.answer("Lỗi: Không thể tạo sơ đồ mạng lúc này.")
 
 
 @dp.message()
@@ -51,27 +76,25 @@ async def handle_sec_block(callback: CallbackQuery):
     if not callback.data or not isinstance(callback.message, Message):
         return
 
-    # Tach du lieu tu nut bam (Vi du: secblock_1_AA:BB:CC:DD:EE:FF)
     _, dpid, mac = callback.data.split("_")
 
     async with httpx.AsyncClient() as client:
-        # 1. Goi API gui lenh chan xuong he thong mang
         await client.post(
             f"{FAST_API_URL}/access/block", json={"dpid": int(dpid), "mac_address": mac}
         )
-        # 2. Bao cho FastAPI biet Admin da xu ly de HUY dem nguoc 5 phut
+
         await client.post(
             f"{FAST_API_URL}/security/resolve/{dpid}/{mac}/blocked_by_admin"
         )
 
     callback_text = callback.message.text or ""
-    # Sua lai tin nhan hien tai: Xoa nut bam va them dong chu xac nhan
+
     await callback.message.edit_text(
-        callback_text + "\n\n*Cap nhat:* Admin da xac nhan CHAN thanh cong.",
+        callback_text + f"\n\n*Updated:* MAC {mac} has been blocked.",
         parse_mode="Markdown",
     )
-    # Hien pop-up nho tren man hinh dien thoai bao hieu da nhan lenh
-    await callback.answer("Da thuc thi lenh chan mang!")
+
+    await callback.answer("Blocked successfully!")
 
 
 @dp.callback_query(F.data.startswith("secignore_"))
@@ -79,22 +102,20 @@ async def handle_sec_ignore(callback: CallbackQuery):
     if not callback.data or not isinstance(callback.message, Message):
         return
 
-    # Tach du lieu tu nut bam
     _, dpid, mac = callback.data.split("_")
 
     async with httpx.AsyncClient() as client:
-        # Bao cho FastAPI biet Admin bo qua de HUY tien trinh chan tu dong
         await client.post(
             f"{FAST_API_URL}/security/resolve/{dpid}/{mac}/ignored_by_admin"
         )
 
     callback_text = callback.message.text or ""
-    # Sua lai tin nhan hien tai: Xoa nut bam
+
     await callback.message.edit_text(
-        callback_text + "\n\n*Cap nhat:* Admin da chon BO QUA canh bao nay.",
+        callback_text + "\n\n*Update:* The admin has chosen to ignore this warning!",
         parse_mode="Markdown",
     )
-    await callback.answer("Da huy bo dong thai chan mang.")
+    await callback.answer("Cancelled!")
 
 
 async def main():
