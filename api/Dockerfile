@@ -1,4 +1,3 @@
-# Sử dụng image Python bản nhẹ (slim) để giảm dung lượng
 FROM python:3.11-slim
 
 WORKDIR /app

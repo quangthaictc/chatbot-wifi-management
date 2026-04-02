@@ -1,3 +1,4 @@
+import yaml
 import httpx
 from config.settings import FAST_API_URL
 

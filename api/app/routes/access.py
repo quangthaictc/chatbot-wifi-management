@@ -2,11 +2,13 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import httpx
 from utils.network_mapper import NetworkMapper
+from utils.logger_config import get_logger
 
 from core.config import RYU_URL
 
 router = APIRouter(prefix="/access", tags=["access"])
 mapper = NetworkMapper()
+logger = get_logger("FastAPI")
 
 
 class AccessRequest(BaseModel):
@@ -35,14 +37,15 @@ async def get_blocked_devices(dpid: int):
                         f"{mapper.get_station_info(match['dl_src'])} - {match['dl_src']}"
                     )
 
+            logger.info(f"HTTP GET: 200 - /access/blocked/{dpid}")
             return {
                 "dpid": dpid,
                 "location": mapper.get_device_name(dpid),
                 "blocked_devices": blocked_macs,
                 "total_blocked": len(blocked_macs),
             }
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP GET: {e.response.status_code} - {e.request.url}")
 
 
 @router.post("/block")
@@ -61,13 +64,17 @@ async def block_device(req: AccessRequest):
         try:
             resp = await client.post(f"{RYU_URL}/stats/flowentry/add", json=flow_data)
             resp.raise_for_status()
+
+            logger.info(
+                f"HTTP POST: 200 - /access/block?dpid={req.dpid}&mac_address={req.mac_address}"
+            )
             return {
                 "status": "success",
                 "action": "block",
                 "message": f"The device {mapper.get_station_info(req.mac_address)} with MAC address {req.mac_address} has been disconnected.",
             }
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP POST: {e.response.status_code} - {e.request.url}")
 
 
 @router.delete("/block/{dpid}/{mac_address}")
@@ -87,10 +94,11 @@ async def unblock_device(dpid: int, mac_address: str):
                 f"{RYU_URL}/stats/flowentry/delete_strict", json=flow_data
             )
             resp.raise_for_status()
+            logger.info(f"HTTP DELETE: 200 - /access/block/{dpid}/{mac_address}")
             return {
                 "status": "success",
                 "action": "unblock",
                 "message": f"Network connection has been restored for device {mapper.get_station_info(mac_address)} - {mac_address}.",
             }
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP DELETE: {e.response.status_code} - {e.request.url}")

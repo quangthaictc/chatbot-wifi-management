@@ -8,9 +8,11 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram import F
 from aiogram.types import CallbackQuery, Message
-import aiohttp
-from aiogram.types import BufferedInputFile
+from aiogram.types import FSInputFile
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from config.settings import TELEGRAM_API_TOKEN, FAST_API_URL
+from datetime import datetime
 
 from services.gemini_api import GeminiService
 from middlewares.auth import AuthMiddleware
@@ -32,27 +34,36 @@ async def cmd_start(message: types.Message):
     )
 
 
-@dp.message(Command("map"))
-async def send_network_map(message: Message):
-    await message.answer("Đang lấy tọa độ vệ tinh và vẽ sơ đồ mạng...")
+@dp.message(F.text.lower().in_({"map", "bản đồ", "sơ đồ", "topology"}))
+async def send_map(message: types.Message):
+    await message.answer("Capturing network topology...")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"topology_{timestamp}.png"
 
-    # Gọi xuống API của Backend
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"{FAST_API_URL}/network/diagram") as resp:
-            if resp.status == 200:
-                # Đọc byte của tấm ảnh
-                image_bytes = await resp.read()
+    options = Options()
+    options.binary_location = "/usr/bin/chromium"
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920,1080")
 
-                # Đóng gói ảnh cho Telegram
-                photo = BufferedInputFile(image_bytes, filename="map.png")
+    try:
+        driver = webdriver.Chrome(options=options)
+        driver.get("http://127.0.0.1:5000/")
 
-                # Gửi ảnh bùm!
-                await message.answer_photo(
-                    photo=photo,
-                    caption="Báo cáo Sếp, đây là sơ đồ hạ tầng mạng hiện tại!",
-                )
-            else:
-                await message.answer("Lỗi: Không thể tạo sơ đồ mạng lúc này.")
+        await asyncio.sleep(5)
+
+        driver.save_screenshot(f"/app/topologies/{filename}")
+        driver.quit()
+
+        photo = FSInputFile(f"/app/topologies/{filename}")
+        await message.answer_photo(
+            photo=photo,
+            caption=f"Network Topology at {datetime.now().strftime('%H:%M:%S')}",
+            parse_mode=None,
+        )
+    except Exception as e:
+        await message.answer(f"Error capturing network topology!")
 
 
 @dp.message()

@@ -2,3 +2,6 @@ asyncio
 google-genai
 aiogram
 httpx
+selenium
+webdriver-manager
+pyyaml

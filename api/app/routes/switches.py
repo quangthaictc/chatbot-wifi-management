@@ -1,14 +1,16 @@
 from fastapi import APIRouter, HTTPException
 import httpx
+from pydantic import DirectoryPath
 from utils.network_mapper import NetworkMapper
 from utils.dpid import DPIDConverter
+from utils.logger_config import get_logger
 
 from core.config import RYU_URL
 import asyncio
 
 router = APIRouter(prefix="/switches", tags=["switches"])
 mapper = NetworkMapper()
-
+logger = get_logger("FastAPI")
 
 @router.get("/")
 async def get_all_switches():
@@ -20,9 +22,10 @@ async def get_all_switches():
             raw_data = resp.json()
             switches = [DPIDConverter.to_int(switch.get("dpid")) for switch in raw_data]
 
+            logger.info(f"HTTP GET: 200 - /switches")
             return {"active_switches": switches, "total": len(switches)}
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP GET: {e.response.status_code} - {e.request.url}")
 
 
 @router.get("/{dpid}")
@@ -47,14 +50,15 @@ async def get_switch_stats(dpid: int):
                             "tx_errors": port.get("tx_errors"),
                         }
                     )
-            print(f"==================================={DPIDConverter.to_hex(dpid)}")
+
+            logger.info(f"HTTP GET: 200 - /switches/{dpid}")
             return {
                 "dpid": dpid,
                 "dpid_device_name": mapper.get_device_name(dpid),
                 "ports": clean_stats,
             }
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP GET: {e.response.status_code} - {e.request.url}")
 
 
 @router.get("/{dpid}/bandwidth")
@@ -89,14 +93,15 @@ async def get_switch_bandwidth(dpid: int):
                         }
                     )
 
+            logger.info(f"HTTP GET: 200 - /switches/{dpid}/bandwidth")
             return {
                 "dpid": dpid,
                 "dpid_device_name": mapper.get_device_name(dpid),
                 "bandwidth": bandwidth_stats,
             }
 
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP GET: {e.response.status_code} - {e.request.url}")
 
 
 @router.get("/{dpid}/flows")
@@ -125,11 +130,12 @@ async def get_switch_flows(dpid: int):
                         }
                     )
 
+            logger.info(f"HTTP GET: 200 - /switches/{dpid}/flows")
             return {
                 "dpid": dpid,
                 "dpid_device_name": mapper.get_device_name(dpid),
                 "active_custom_rules": custom_rules,
                 "total_rules": len(custom_rules),
             }
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP GET: {e.response.status_code} - {e.request.url}")

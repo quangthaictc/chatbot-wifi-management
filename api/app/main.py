@@ -3,10 +3,11 @@
 import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from utils.draw_network import generate_network_diagram
 import httpx
 from routes import access, stations, switches, security
 from core.config import RYU_URL
+
+from utils.logger_config import get_logger
 
 app = FastAPI(title="QuackWF API", version="1.0.0")
 
@@ -14,6 +15,8 @@ app.include_router(access.router)
 app.include_router(stations.router)
 app.include_router(switches.router)
 app.include_router(security.router)
+
+logger = get_logger("FastAPI")
 
 
 @app.get("/network/overview", tags=["network"])
@@ -28,23 +31,10 @@ async def get_network_overview():
             switches_resp.raise_for_status()
             links_resp.raise_for_status()
 
+            logger.info(f"HTTP GET: 200 - /network/overview")
             return {"switches": switches_resp.json(), "links": links_resp.json()}
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=503, detail=str(e))
-
-
-@app.get("/network/diagram", tags=["network"])
-async def get_network_diagram_image():
-    # Gọi lại hàm lấy JSON của bạn
-    topo_data = await get_network_overview()
-
-    # Đưa JSON cho hàm vẽ ảnh
-    image_path = generate_network_diagram(topo_data)
-
-    # FastAPI trả thẳng file ảnh này về cho client (Telegram Bot)
-    return FileResponse(
-        image_path, media_type="image/png", filename="network_diagram.png"
-    )
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP GET: {e.response.status_code} - {e.request.url}")
 
 
 @app.get("/health", tags=["system"])
@@ -53,6 +43,8 @@ async def health_check():
         try:
             resp = await client.get(f"{RYU_URL}/stats/switches")
             resp.raise_for_status()
+            logger.info(f"HTTP GET: 200 - /network/health")
             return {"status": "healthy", "ryu_connected": True}
-        except httpx.RequestError:
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP GET: {e.response.status_code} - {e.request.url}")
             return {"status": "unhealthy", "ryu_connected": False}
