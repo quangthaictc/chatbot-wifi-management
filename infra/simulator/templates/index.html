@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h2>Mininet WiFi Topology</h2>
+    
+    <div class="map-wrapper">
+        <div class="map-container" id="map-container">
+            <div id="board-transform">
+                <svg id="links-svg"></svg>
+                <div id="nodes-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="context-menu" class="context-menu"></div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="node-title"></h3>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            
+            <div id="info-area" style="display:none;">
+                <div id="info-content"></div>
+            </div>
+
+            <div id="scan-area" style="display:none;">
+                <button onclick="scanNetwork()">Start WiFi Scan</button>
+                <div id="scan-results" style="margin-top: 20px;"></div>
+            </div>
+            
+            <div id="terminal-area" style="display:none;">
+                <div id="terminal-wrapper" onclick="document.getElementById('cmd-input').focus()">
+                    <div id="term-history"></div>
+                    <div class="term-input-line">
+                        <span class="term-prompt" id="term-prompt"></span>
+                        <input type="text" id="cmd-input" class="term-input" autocomplete="off" spellcheck="false">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</html>

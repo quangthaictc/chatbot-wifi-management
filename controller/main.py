@@ -9,7 +9,6 @@ from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
-from ryu.app.ofctl.api import get_datapath
 from base_switch import BaseSwitch
 
 class MainController(BaseSwitch):
@@ -19,7 +18,7 @@ class MainController(BaseSwitch):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logger.info("Controller IP: %s", socket.gethostbyname(socket.gethostname()))
-        self.mac_table = {} 
+        self.mac_to_port = {}
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, event):
@@ -27,7 +26,7 @@ class MainController(BaseSwitch):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        self.logger.info("datapath connected %s", datapath.id)
+        self.logger.info("datapath connected %s", datapath)
         self.send_messages(datapath, [self.del_flow(datapath)])
 
         match = parser.OFPMatch()
@@ -56,38 +55,36 @@ class MainController(BaseSwitch):
         dst = eth.dst
         src = eth.src
         dpid = datapath.id
+        
+        self.mac_to_port.setdefault(dpid, {})
+        self.mac_to_port[dpid][src] = in_port
 
-        # Học MAC toàn cục
-        self.mac_table.setdefault(src, {})
-        self.mac_table[src] = {"dpid": dpid, "port": in_port}
-
-        # Kiểm tra đích đến
-        if dst in self.mac_table:
-            dst_info = self.mac_table[dst]
+        if dst in self.mac_to_port[dpid]:
+            out_port = self.mac_to_port[dpid][dst]
             
-            # 1. Nếu cùng Switch: Chặn nếu khác Port (Isolation)
-            if dst_info["dpid"] == dpid:
-                if dst_info["port"] != in_port:
-                    self.logger.info("DROP: Same DPID %s, Different Port %s->%s", dpid, in_port, dst_info["port"])
-                    return
-                out_port = dst_info["port"]
-            # 2. Nếu khác Switch: Đẩy ra cổng liên kết (Flood để tìm đường)
-            else:
-                out_port = ofproto.OFPP_FLOOD
+            if out_port != in_port:
+                self.logger.info("BLOCKED: %s -> %s (Port %s to %s)", src, dst, in_port, out_port)
+                return
+            
+            actions = [parser.OFPActionOutput(out_port)]
         else:
-            # 3. CHƯA BIẾT ĐÍCH: Flood toàn mạng để tìm
             out_port = ofproto.OFPP_FLOOD
+            actions = [parser.OFPActionOutput(in_port)]
 
-        actions = [parser.OFPActionOutput(out_port)]
-
-        # Nạp flow chỉ khi đã xác định được port đích cụ thể và cùng DPID
         if out_port != ofproto.OFPP_FLOOD:
             match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
-            inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)]
-            msg_flow = self.add_flow(datapath, 0, 1, match, inst, i_time=10)
-            self.send_messages(datapath, [msg_flow])
+            inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
+                                                 actions)]
+            
+            flow_msg = self.add_flow(datapath, 0, 1, match, inst, i_time=10)
+            self.send_messages(datapath, [flow_msg])
 
-        # Packet Out
         out_msg = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
                                       in_port=in_port, actions=actions, data=msg.data)
+        
+        if out_port == ofproto.OFPP_FLOOD:
+            self.logger.info("packet in %s %s %s %s (FLOODING)", dpid, src, dst, in_port)
+        else:
+            self.logger.info("packet in %s %s %s %s (FORWARDING)", dpid, src, dst, in_port)
+
         self.send_messages(datapath, [out_msg])

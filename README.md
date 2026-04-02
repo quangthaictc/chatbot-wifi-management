@@ -70,3 +70,17 @@ optional:
 -6: wpan tools
 
 **See more: [mininet-wifi repository](https://github.com/intrig-unicamp/mininet-wifi)**
+
+Fix error when run Mininet-WiFi `ovs-vsctl: cannot create a port named ap1-wlan1-1 because a port named ap1-wlan1-1 already exists on bridge ap1`:
+
+```bash
+# /etc/NetworkManager/NetworkManager.conf
+[keyfile]
+unmanaged-devices=interface-name:wlan*,interface-name:ap*,interface-name:sta*
+```
+
+```bash
+sudo systemctl restart NetworkManager.service
+
+sudo systemctl daemon-reload
+```
