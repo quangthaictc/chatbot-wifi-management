@@ -129,7 +129,7 @@ project_root/
 
 ### Error while installation Ryu
 
-Make sure the Python version is Python3.9 (maybe...).I've tested it on higher versions and it doesn't work, as I read in [this blog](https://www.linkedin.com/pulse/installing-ryu-sdn-controller-ubuntu-step-by-step-developer-kamran-g5gdf/)
+Make sure the Python version is Python3.9 (maybe...).I've tested it on higher versions and it doesn't work, as I read in [this blog](https://www.linkedin.com/pulse/installing-ryu-sdn-controller-ubuntu-step-by-step-developer-kamran-g5gdf/) *(last seen: 08/04/2026)*
 
 ```bash
 sudo add-apt-repository ppa:deadsnakes/ppa
