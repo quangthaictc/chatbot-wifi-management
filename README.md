@@ -95,6 +95,15 @@ sudo util/install.sh -Wlnfv
 
 ## Testing and Verification
 
+> [!WARNING]
+> If installing manually, you must also launch the applications manually!
+>
+> For each module (except Mininet-WiFi - infra directory), you must create and run the venv and then execute the command `pip install -r requirements.txt`.
+>
+> After successfully installing the libraries, execute the main.py file in each directory.
+>
+> To run the infrastructure, in the `infra/simulator` directory, execute the `web_simulator.py` file to automatically deploy devices in the Mininet-WiFi infrastructure based on the `network_config.yml` file at the project root.
+
 - **Connectivity Tests:** Run `pingall` within the Mininet-WiFi CLI to verify initial path computation by the Ryu controller.
 
 - **Security Stress Tests:** Use `python3 -c 'import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1); [s.sendto(b"DoS test", ("10.255.255.255", 80)) for _ in range(10000)]'` from a station node to simulate a DoS attack and verify if the controller pushes a "DROP" flow entry.
@@ -113,7 +122,7 @@ project_root/
 ├── utils/              # Shared logging
 ├── docker-compose.yml  # Orchestration file
 ├── network_config.yml  # Automated change config while drag nodes in WebUI Simulation
-└── network_config_original.yaml # Network topology definition
+└── network_config_original.yaml # Network topology definition (just a backup file)
 ```
 
 ## Troubleshooting
