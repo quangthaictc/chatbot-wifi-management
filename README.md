@@ -100,7 +100,7 @@ sudo util/install.sh -Wlnfv
 >
 > For each module (except Mininet-WiFi - infra directory), you must create and run the venv and then execute the command `pip install -r requirements.txt`.
 >
-> After successfully installing the libraries, execute the main.py file in each directory.
+> After successfully installing the libraries, execute the `main.py` file in each directory.
 >
 > To run the infrastructure, in the `infra/simulator` directory, execute the `web_simulator.py` file to automatically deploy devices in the Mininet-WiFi infrastructure based on the `network_config.yml` file at the project root.
 
