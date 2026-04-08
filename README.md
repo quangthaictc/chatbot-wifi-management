@@ -1,86 +1,138 @@
-# Draft notes - The full documentation will be available soon!
+# Chatbot WiFi Management Project
 
-Ryu just work good in python3.9 (maybe)
+## Project Overview
 
-Thanks so much for [this blog](https://www.linkedin.com/pulse/installing-ryu-sdn-controller-ubuntu-step-by-step-developer-kamran-g5gdf/)
+This project implements a centralized wireless network management system using **Software-Defined Networking (SDN) architecture**. By decoupling the control logic from the underlying hardware, the system provides high flexibility and programmability. A core component of this project is an AI-driven Chatbot Agent that allows administrators to manage network policies and security using natural language, significantly reducing the complexity of traditional CLI-based management.
 
-## Installation
+## Core Features
 
-### Ryu setup
+- **AI Natural Language Processing:** Integration with Gemini API to parse human intent into actionable network configurations.
 
-**Install python3.9 & dependencies**
+- **Automated Mitigation:** Real-time detection and automatic blocking of ARP Spoofing and DoS flooding attacks at the switch level.
+
+- **Centralized Monitoring:** Real-time traffic analysis and event logging via a unified PLG (Promtail, Loki, Grafana) stack.
+
+- **Visual Topology:** A web-based interface that renders the current state of the virtual wireless network using Flask and Mininet-WiFi.
+
+## System Architecture
+
+The system is divided into three distinct planes:
+
+1. **Application Plane:** Consists of the **Telegram Bot (using Aiogram Framework)** and **FastAPI**. It handles user interaction and translates natural language into API calls.
+
+2. **Control Plane:** Powered by **Ryu SDN Controller**. It manages the flow tables of the switches via the **OpenFlow protocol** and executes security logic.
+
+3. **Data Plane:** Built with **Mininet-WiFi** and **Open vSwitch**. It simulates the physical layer, including Access Points, Stations, and wireless signal propagation.
+
+## Tech Stack
+
+- **Networking:** Mininet-WiFi, Open vSwitch, Ryu Framework, OpenFlow v1.3.
+
+- **Backend:** Python 3.9, FastAPI, Flask.
+
+- **AI and Bot:** Gemini API, Aiogram v3.
+
+- DevOps and Monitoring: Docker and Docker Compose, **PLG Stack** -  Promtail (Log Collector), Loki (Log Aggregator), Grafana (Visualization).
+
+## Getting Started
+
+Create a .env file in the root directory (look at .env.example).
+
+The recommended way to deploy the system is using Docker Compose to ensure environment consistency.
+
+Clone the repository:
+
+```bash
+git clone <repository_url>
+cd <project_directory>
+
+docker compose up -d
+```
+
+## Manual Installation
+
+This project tested on Ubuntu Server 24.04 LTS.
+
+### Ryu Application Installation
+
+Ryu requires Python 3.9 for optimal stability.
 
 ```bash
 sudo apt update
-sudo apt install software-properties-common
-
 sudo add-apt-repository ppa:deadsnakes/ppa
-# Then press ENTER
+sudo apt install python3.9 python3.9-venv gcc libffi-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev -y
 
-sudo apt update -y
-
-sudo apt install python3.9 python3.9-venv gcc libffi-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev
-```
-
-**Create and active venv**
-
-```bash
 python3.9 -m venv .venv
-```
+source .venv/bin/activate
 
-```bash
-source .venv/bin/active
-```
-
-**Install python packages**
-
-```bash
-# Fix error while install ryu
-
+# Critical: Ryu installation requires specific setuptools version
 pip install "setuptools<58.0.0"
-
 pip install -r requirements.txt
 ```
 
 
-**Check ryu-manager**
-
-```bash
-ryu-manager --version
-```
-
-### Mininet-Wifi setup
+### Mininet-WiFi Installation
 
 ```bash
 git clone https://github.com/intrig-unicamp/mininet-wifi
-
 cd mininet-wifi
-
 sudo util/install.sh -Wlnfv
 ```
 
-install.sh options:
--W: wireless dependencies
--n: mininet-wifi dependencies
--f: OpenFlow
--v: OpenvSwitch
--l: wmediumd
-optional:
--P: P4 dependencies
--6: wpan tools
+## Configuration
 
-**See more: [mininet-wifi repository](https://github.com/intrig-unicamp/mininet-wifi)**
+- **network_config.yaml:** Defines the node parameters, including SSID, IP ranges, MAC addresses, and bandwidth limits for the simulation.
 
-Fix error when run Mininet-WiFi `ovs-vsctl: cannot create a port named ap1-wlan1-1 because a port named ap1-wlan1-1 already exists on bridge ap1`:
+- **.env:** Stores sensitive credentials for the Telegram Bot, Gemini AI and some configurations.
 
-```bash
-# /etc/NetworkManager/NetworkManager.conf
-[keyfile]
-unmanaged-devices=interface-name:wlan*,interface-name:ap*,interface-name:sta*
+- **logger_config.py:** A shared Python module that ensures all components (Bot, API, Controller) produce standardized logs for Loki to index.
+
+## Usage
+
+1. **Network Simulation:** Once started, access the Web UI at http://localhost:5000 to see the wireless topology.
+
+2. **Telegram Interaction:** Open your Telegram Bot and send commands like "Show all active stations" or "Block device with MAC 02:00:00:00:01:00".
+
+## Testing and Verification
+
+- **Connectivity Tests:** Run `pingall` within the Mininet-WiFi CLI to verify initial path computation by the Ryu controller.
+
+- **Security Stress Tests:** Use `python3 -c 'import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1); [s.sendto(b"DoS test", ("10.255.255.255", 80)) for _ in range(10000)]'` from a station node to simulate a DoS attack and verify if the controller pushes a "DROP" flow entry.
+
+- **AI Intent Verification:** Test various phrasing of commands (e.g., "Kick out station 1" vs "Disconnect 10.0.0.1") to ensure Gemini correctly identifies the "Block" function.
+
+## Directory Structure
+
+```
+project_root/
+├── api/                # FastAPI source code
+├── controller/         # SDN Controller
+├── infra/              # Mininet-WiFi
+├── loggings/           # Basic config logging system 
+├── telegram/           # Telegram Bot and Gemini API logic
+├── utils/              # Shared logging
+├── docker-compose.yml  # Orchestration file
+├── network_config.yml  # Automated change config while drag nodes in WebUI Simulation
+└── network_config_original.yaml # Network topology definition
 ```
 
-```bash
-sudo systemctl restart NetworkManager.service
+## Troubleshooting
 
-sudo systemctl daemon-reload
+### Error while installation Ryu
+
+Make sure the Python version is Python3.9 (maybe...).I've tested it on higher versions and it doesn't work, as I read in [this blog](https://www.linkedin.com/pulse/installing-ryu-sdn-controller-ubuntu-step-by-step-developer-kamran-g5gdf/)
+
+```bash
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.9
+```
+
+### Interface Conflicts
+
+If Mininet-WiFi fails to create ports (i got this error: "ovs-vsctl: cannot create a port named ap1-wlan1-1 because a port named ap1-wlan1-1 already exists on bridge ap1"), ensure NetworkManager is not controlling wireless interfaces. Add the following to `/etc/NetworkManager/NetworkManager.conf`:
+
+```
+[keyfile]
+unmanaged-devices=interface-name:wlan*,interface-name:ap*,interface-name:sta*
 ```
