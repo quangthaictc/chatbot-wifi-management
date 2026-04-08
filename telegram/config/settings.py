@@ -1,0 +1,6 @@
+import os
+
+TELEGRAM_API_TOKEN = os.getenv("TELEGRAM_API_TOKEN", "TELEGRAM_API_TOKEN")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "GEMINI_API_KEY")
+FAST_API_URL = os.getenv("FAST_API_URL", "http://127.0.0.1:8000")
+ADMIN_ID = os.getenv("ADMIN_ID", "")
